@@ -8,7 +8,8 @@ public class Main {
             System.exit(1);
         }
         int res = ToolRunner.run(new Configuration(), new WordCount(), args);
-        System.out.println("Done " + res);
-        System.exit(res);
+        if(res != 0) System.exit(res);
+        res = ToolRunner.run(new Configuration(), new InMapperWordCount(), args);
+        if(res != 0) System.exit(res);
     }
 }
