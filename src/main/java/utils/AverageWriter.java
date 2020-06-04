@@ -6,7 +6,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class PairWriter implements Writable {
+public class AverageWriter implements Writable {
     private long sum = 0;
     private int count = 1;
 

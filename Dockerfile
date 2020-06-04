@@ -146,8 +146,7 @@ FROM maven:3.5.2-jdk-8-alpine AS BUILD_ENV
 ENV HOME=/tmp
 WORKDIR $HOME
 ADD pom.xml $HOME
-RUN mvn dependency:go-offline
-#RUN ["/usr/local/bin/mvn-entrypoint.sh", "mvn", "verify", "clean", "--fail-never"]
+RUN mvn dependency:go-offline -B
 ADD src $HOME/src
 RUN mvn package
 

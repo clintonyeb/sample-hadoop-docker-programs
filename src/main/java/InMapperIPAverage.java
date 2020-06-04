@@ -1,7 +1,6 @@
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -9,8 +8,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
+import utils.AverageWriter;
 import utils.Pair;
-import utils.PairWriter;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,7 +29,7 @@ public class InMapperIPAverage extends Configured implements Tool {
         job.setJobName(jobName);
 
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(PairWriter.class);
+        job.setMapOutputValueClass(AverageWriter.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(DoubleWritable.class);
 
@@ -46,8 +45,8 @@ public class InMapperIPAverage extends Configured implements Tool {
     }
 
     public static class MyMapper extends
-            Mapper<Object, Text, Text, PairWriter> {
-        private static final PairWriter pairWriter = new PairWriter();
+            Mapper<Object, Text, Text, AverageWriter> {
+        private static final AverageWriter AVERAGE_WRITER = new AverageWriter();
         private final Text word = new Text();
         private Map<String, Pair<Long, Integer>> cache;
 
@@ -77,8 +76,8 @@ public class InMapperIPAverage extends Configured implements Tool {
             for (String s : cache.keySet()) {
                 word.set(s);
                 Pair<Long, Integer> pair = cache.get(s);
-                pairWriter.set(pair.getKey(), pair.getValue());
-                context.write(word, pairWriter);
+                AVERAGE_WRITER.set(pair.getKey(), pair.getValue());
+                context.write(word, AVERAGE_WRITER);
             }
             super.cleanup(context);
         }
@@ -91,15 +90,15 @@ public class InMapperIPAverage extends Configured implements Tool {
     }
 
     public static class Reduce extends
-            Reducer<Text, PairWriter, Text, DoubleWritable> {
+            Reducer<Text, AverageWriter, Text, DoubleWritable> {
         private final DoubleWritable average = new DoubleWritable();
 
         @Override
-        protected void reduce(Text key, Iterable<PairWriter> values,
+        protected void reduce(Text key, Iterable<AverageWriter> values,
                               Context context) throws IOException, InterruptedException {
             long sum = 0;
             int cnt = 0;
-            for (PairWriter value : values) {
+            for (AverageWriter value : values) {
                 sum += value.getSum();
                 cnt += value.getCount();
             }
