@@ -15,11 +15,17 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class InMapperWordCount extends Configured implements Tool {
+    private final String jobName;
+
+    public InMapperWordCount(String jobName) {
+        this.jobName = jobName;
+    }
+
     @Override
     public int run(String[] strings) throws Exception {
         Job job = new Job(getConf());
         job.setJarByClass(InMapperWordCount.class);
-        job.setJobName("innermapperwordcount");
+        job.setJobName(jobName);
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
@@ -27,8 +33,10 @@ public class InMapperWordCount extends Configured implements Tool {
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
 
-        FileInputFormat.setInputPaths(job, new Path(strings[0]));
-        FileOutputFormat.setOutputPath(job, new Path(strings[1]));
+        String inputPath = strings[0]+ "/" + jobName;
+        String outputPath = strings[1] + "/" + jobName;
+        FileInputFormat.setInputPaths(job, new Path(inputPath));
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
         return job.waitForCompletion(false) ? 0 : 1;
     }

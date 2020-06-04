@@ -12,29 +12,27 @@ MAINTAINER Clinton Yeboah
 COPY --from=BUILD_ENV /tmp/target/hadoop-1.0-jar-with-dependencies.jar /bin/
 USER root
 
+#RUN apt-get update \
+# && apt-get install -y locales \
+# && dpkg-reconfigure -f noninteractive locales \
+# && locale-gen C.UTF-8 \
+# && /usr/sbin/update-locale LANG=C.UTF-8 \
+# && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+# && locale-gen \
+# && apt-get clean \
+# && rm -rf /var/lib/apt/lists/*
+#
+## Users with other locales should set this in their derivative image
+#ENV LANG en_US.UTF-8
+#ENV LANGUAGE en_US:en
+#ENV LC_ALL en_US.UTF-8
+
+
 RUN apt-get update \
- && apt-get install -y locales \
- && dpkg-reconfigure -f noninteractive locales \
- && locale-gen C.UTF-8 \
- && /usr/sbin/update-locale LANG=C.UTF-8 \
- && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
- && locale-gen \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
-
-# Users with other locales should set this in their derivative image
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
-
-
-RUN apt-get update \
- && apt-get install -y curl unzip tar sudo openssh-server openssh-client rsync apt-utils wget gnupg software-properties-common \
-    build-essential python-dev python3 python3-setuptools python3-pip \
- && ln -fs /usr/bin/python3 /usr/bin/python \
- && pip3 install py4j \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+ && apt-get install -y curl unzip tar sudo openssh-server openssh-client rsync apt-utils wget gnupg software-properties-common
+#    build-essential python-dev python3 python3-setuptools python3-pip \
+# && ln -fs /usr/bin/python3 /usr/bin/python \
+# && pip3 install py4j \
 
 # passwordless ssh
 RUN yes 'y' | ssh-keygen -q -N "" -t dsa -f /etc/ssh/ssh_host_dsa_key
@@ -88,12 +86,12 @@ RUN mkdir $HADOOP_HOME/input
 RUN cp $HADOOP_HOME/etc/hadoop/*.xml $HADOOP_HOME/input
 
 # pseudo distributed
-ADD core-site.xml.template $HADOOP_HOME/etc/hadoop/core-site.xml.template
+ADD config/core-site.xml.template $HADOOP_HOME/etc/hadoop/core-site.xml.template
 RUN sed s/HOSTNAME/localhost/ $HADOOP_HOME/etc/hadoop/core-site.xml.template > $HADOOP_HOME/etc/hadoop/core-site.xml
-ADD hdfs-site.xml $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+ADD config/hdfs-site.xml $HADOOP_HOME/etc/hadoop/hdfs-site.xml
 
-ADD mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
-ADD yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml
+ADD config/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
+ADD config/yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml
 
 RUN $HADOOP_HOME/bin/hdfs namenode -format
 
@@ -101,7 +99,7 @@ RUN $HADOOP_HOME/bin/hdfs namenode -format
 # RUN rm -rf $HADOOP_HOME/lib/native
 # RUN mv /tmp/native $HADOOP_HOME/lib
 
-ADD ssh_config /root/.ssh/config
+ADD config/ssh_config /root/.ssh/config
 RUN chmod 600 /root/.ssh/config
 RUN chown root:root /root/.ssh/config
 
@@ -139,9 +137,9 @@ RUN service ssh start && $HADOOP_HOME/etc/hadoop/hadoop-env.sh && $HADOOP_HOME/s
 RUN service ssh start && $HADOOP_HOME/etc/hadoop/hadoop-env.sh && $HADOOP_HOME/sbin/start-all.sh dfs -put $HADOOP_HOME/etc/hadoop/ input
 
 # Clean up
-RUN mkdir -p /home/input && mkdir -p /home/output
+RUN mkdir -p /home/input
 RUN rm -rf /home/input/* && rm -rf /home/output
-COPY ./resources/* /home/input/
+ADD resources /home/input/
 
 CMD ["/etc/bootstrap.sh", "-d"]
 

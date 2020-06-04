@@ -7,9 +7,8 @@ public class Main {
             System.err.println("Usage: Wordcount <input> <output>");
             System.exit(1);
         }
-        int res = ToolRunner.run(new Configuration(), new WordCount(), args);
-        if(res != 0) System.exit(res);
-        res = ToolRunner.run(new Configuration(), new InMapperWordCount(), args);
-        if(res != 0) System.exit(res);
+        ToolRunner.run(new Configuration(), new WordCount("wordcount"), args);
+        ToolRunner.run(new Configuration(), new InMapperWordCount("inmapperwordcount"), args);
+        ToolRunner.run(new Configuration(), new IPAverage("ipaverage"), args);
     }
 }
