@@ -1,5 +1,6 @@
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -12,7 +13,6 @@ import org.apache.hadoop.util.Tool;
 import utils.CrystalWriter;
 
 import java.io.IOException;
-import java.util.StringTokenizer;
 
 public class PairCrystal extends Configured implements Tool {
     private final String jobName;
@@ -27,8 +27,10 @@ public class PairCrystal extends Configured implements Tool {
         job.setJarByClass(PairCrystal.class);
         job.setJobName(jobName);
 
+        job.setMapOutputKeyClass(CrystalWriter.class);
+        job.setMapOutputValueClass(IntWritable.class);
         job.setOutputKeyClass(CrystalWriter.class);
-        job.setOutputValueClass(IntWritable.class);
+        job.setOutputValueClass(DoubleWritable.class);
 
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
@@ -66,23 +68,30 @@ public class PairCrystal extends Configured implements Tool {
                 v.set(record[position]);
                 pair.set(u, v);
                 context.write(pair, ONE);
+                v.set("*");
+                context.write(pair, ONE);
             }
         }
     }
 
     public static class MyReducer extends
-            Reducer<CrystalWriter, IntWritable, CrystalWriter, IntWritable> {
-        private final IntWritable count = new IntWritable();
+            Reducer<CrystalWriter, IntWritable, CrystalWriter, DoubleWritable> {
+        private final DoubleWritable avg = new DoubleWritable();
+        private long sum = 0;
 
         @Override
         protected void reduce(CrystalWriter key, Iterable<IntWritable> values,
                               Context context) throws IOException, InterruptedException {
-            int sum = 0;
+            int s = 0;
             for (IntWritable value : values) {
-                sum += value.get();
+                s += value.get();
             }
-            count.set(sum);
-            context.write(key, count);
+            if (key.getV().toString().equals("*")) {
+                sum = s;
+            } else {
+                avg.set(s / (double) sum);
+                context.write(key, avg);
+            }
         }
     }
 

@@ -1,7 +1,6 @@
 package utils;
 
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
@@ -54,7 +53,7 @@ public class CrystalWriter implements WritableComparable<CrystalWriter> {
     @Override
     public int compareTo(CrystalWriter o) {
         int res = this.u.compareTo(o.u);
-        if(res != 0) return res;
+        if (res != 0) return res;
         return this.v.compareTo(o.v);
     }
 
