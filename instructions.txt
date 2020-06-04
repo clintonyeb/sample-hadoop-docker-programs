@@ -65,3 +65,9 @@ Part 4. Implement Pairs in Mapper and Stripes in Reducer to compute relative fre
 
 Additional resources for assignment
 File attachment apache-samples.rar ( 20 KB; May 12, 2020 3:58 pm )
+
+
+Quetions:
+
+1. User configuration
+2. PairWritable class

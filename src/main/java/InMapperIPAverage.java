@@ -9,21 +9,24 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
+import utils.Pair;
 import utils.PairWriter;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-public class IPAverage extends Configured implements Tool {
+public class InMapperIPAverage extends Configured implements Tool {
     private final String jobName;
 
-    public IPAverage(String jobName) {
+    public InMapperIPAverage(String jobName) {
         this.jobName = jobName;
     }
 
     @Override
     public int run(String[] strings) throws Exception {
         Job job = new Job(getConf());
-        job.setJarByClass(IPAverage.class);
+        job.setJarByClass(InMapperIPAverage.class);
         job.setJobName(jobName);
 
         job.setMapOutputKeyClass(Text.class);
@@ -31,7 +34,7 @@ public class IPAverage extends Configured implements Tool {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(DoubleWritable.class);
 
-        job.setMapperClass(Map.class);
+        job.setMapperClass(MyMapper.class);
         job.setReducerClass(Reduce.class);
 
         String inputPath = strings[0] + "/" + jobName;
@@ -39,25 +42,51 @@ public class IPAverage extends Configured implements Tool {
         FileInputFormat.setInputPaths(job, new Path(inputPath));
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
-        return job.waitForCompletion(false) ? 0 : 1;
+        return job.waitForCompletion(true) ? 0 : 1;
     }
 
-    public static class Map extends
+    public static class MyMapper extends
             Mapper<Object, Text, Text, PairWriter> {
         private static final PairWriter pairWriter = new PairWriter();
         private final Text word = new Text();
+        private Map<String, Pair<Long, Integer>> cache;
 
         @Override
-        protected void map(Object key, Text value, Context context)
-                throws IOException, InterruptedException {
+        protected void setup(Context context) throws IOException, InterruptedException {
+            super.setup(context);
+            cache = new HashMap<>();
+        }
+
+        @Override
+        protected void map(Object key, Text value, Context context) {
             String[] tokens = value.toString().split(" ");
-            String quant = tokens[tokens.length - 1];
-            if (!quant.equals("-")) {
-                word.set(tokens[0]);
-                pairWriter.setSum(Long.parseLong(quant));
-                pairWriter.setCount(1);
+            String quantity = tokens[tokens.length - 1];
+            if (!quantity.equals("-")) {
+                Pair<Long, Integer> pair = new Pair<>(Long.parseLong(quantity), 1);
+                String ip = tokens[0];
+                if (cache.containsKey(ip)) {
+                    cache.put(ip, addPair(pair, cache.get(ip)));
+                } else {
+                    cache.put(ip, pair);
+                }
+            }
+        }
+
+        @Override
+        protected void cleanup(Context context) throws IOException, InterruptedException {
+            for (String s : cache.keySet()) {
+                word.set(s);
+                Pair<Long, Integer> pair = cache.get(s);
+                pairWriter.set(pair.getKey(), pair.getValue());
                 context.write(word, pairWriter);
             }
+            super.cleanup(context);
+        }
+
+        private Pair<Long, Integer> addPair(Pair<Long, Integer> p1, Pair<Long, Integer> p2) {
+            long key = p1.getKey() + p2.getKey();
+            int value = p1.getValue() + p2.getValue();
+            return new Pair<>(key, value);
         }
     }
 

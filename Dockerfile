@@ -1,15 +1,10 @@
 # Creates pseudo distributed hadoop
 #
 # docker build -t sequenceiq/hadoop .
-FROM maven:3.5.2-jdk-8-alpine AS BUILD_ENV
-COPY pom.xml /tmp/
-COPY src /tmp/src/
-WORKDIR /tmp/
-RUN mvn package
 
-FROM debian
+
+FROM debian AS HADOOP
 MAINTAINER Clinton Yeboah
-COPY --from=BUILD_ENV /tmp/target/hadoop-1.0-jar-with-dependencies.jar /bin/
 USER root
 
 #RUN apt-get update \
@@ -46,7 +41,7 @@ RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | s
 RUN add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
 RUN apt-get update -y \
  && apt-get install -y adoptopenjdk-8-hotspot \
- && update-alternatives --config java \
+# && update-alternatives --config java \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -133,15 +128,10 @@ ENV HDFS_SECONDARYNAMENODE_USER root
 ENV YARN_RESOURCEMANAGER_USER root
 ENV YARN_NODEMANAGER_USER root
 
-RUN service ssh start && $HADOOP_HOME/etc/hadoop/hadoop-env.sh && $HADOOP_HOME/sbin/start-all.sh dfs -mkdir -p /user/root
-RUN service ssh start && $HADOOP_HOME/etc/hadoop/hadoop-env.sh && $HADOOP_HOME/sbin/start-all.sh dfs -put $HADOOP_HOME/etc/hadoop/ input
-
-# Clean up
-RUN mkdir -p /home/input
-RUN rm -rf /home/input/* && rm -rf /home/output
-ADD resources /home/input/
-
-CMD ["/etc/bootstrap.sh", "-d"]
+#RUN service ssh start && $HADOOP_HOME/etc/hadoop/hadoop-env.sh && $HADOOP_HOME/sbin/start-all.sh dfs -mkdir -p /user/root
+#RUN service ssh start && $HADOOP_HOME/etc/hadoop/hadoop-env.sh && $HADOOP_HOME/sbin/start-all.sh dfs -put $HADOOP_HOME/etc/hadoop/ input
+#
+#CMD ["/etc/bootstrap.sh", "-d"]
 
 # Hdfs ports
 EXPOSE 50010 50020 50070 50075 50090 8020 9000
@@ -151,3 +141,20 @@ EXPOSE 10020 19888
 EXPOSE 8030 8031 8032 8033 8040 8042 8088
 #Other ports
 EXPOSE 49707 2122
+
+FROM maven:3.5.2-jdk-8-alpine AS BUILD_ENV
+ENV HOME=/tmp
+WORKDIR $HOME
+ADD pom.xml $HOME
+RUN mvn dependency:go-offline
+#RUN ["/usr/local/bin/mvn-entrypoint.sh", "mvn", "verify", "clean", "--fail-never"]
+ADD src $HOME/src
+RUN mvn package
+
+FROM HADOOP
+COPY --from=BUILD_ENV /tmp/target/hadoop-1.0-jar-with-dependencies.jar /bin/
+
+# Clean up
+RUN mkdir -p /home/input
+RUN rm -rf /home/input/* && rm -rf /home/output
+ADD input /home/input/
