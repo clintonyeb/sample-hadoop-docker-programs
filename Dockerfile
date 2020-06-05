@@ -155,6 +155,6 @@ FROM HADOOP
 COPY --from=BUILD_ENV /tmp/target/hadoop-1.0-jar-with-dependencies.jar /bin/
 
 # Clean up
-RUN mkdir -p /home/input
-RUN rm -rf /home/input/* && rm -rf /home/output
-ADD input /home/input/
+RUN mkdir -p /input
+RUN rm -rf /input/* && rm -rf /output
+ADD input /input/

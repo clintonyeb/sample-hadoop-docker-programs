@@ -3,6 +3,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
@@ -10,14 +11,18 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
+import org.apache.log4j.Logger;
 import utils.CrystalWriter;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-public class PairCrystal extends Configured implements Tool {
+public class HybridCrystal extends Configured implements Tool {
+//    private static final Logger logger = Logger.getLogger(HybridCrystal.class);
     private final String jobName;
 
-    public PairCrystal() {
+    public HybridCrystal() {
         String className = this.getClass().getSimpleName();
         this.jobName = className.toLowerCase();
     }
@@ -25,13 +30,13 @@ public class PairCrystal extends Configured implements Tool {
     @Override
     public int run(String[] strings) throws Exception {
         Job job = new Job(getConf());
-        job.setJarByClass(PairCrystal.class);
+        job.setJarByClass(HybridCrystal.class);
         job.setJobName(jobName);
 
         job.setMapOutputKeyClass(CrystalWriter.class);
         job.setMapOutputValueClass(IntWritable.class);
-        job.setOutputKeyClass(CrystalWriter.class);
-        job.setOutputValueClass(DoubleWritable.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(utils.MapWritable.class);
 
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
@@ -68,30 +73,68 @@ public class PairCrystal extends Configured implements Tool {
                 v.set(record[position]);
                 pair.set(u, v);
                 context.write(pair, ONE);
-                v.set("*");
-                context.write(pair, ONE);
             }
         }
     }
 
     public static class MyReducer extends
-            Reducer<CrystalWriter, IntWritable, CrystalWriter, DoubleWritable> {
-        private final DoubleWritable avg = new DoubleWritable();
-        private long sum = 0;
+            Reducer<CrystalWriter, IntWritable, Text, utils.MapWritable> {
+        private Text currentKey = null;
+        private final Map<String, Integer> mapWritable = new HashMap<>();
 
         @Override
         protected void reduce(CrystalWriter key, Iterable<IntWritable> values,
                               Context context) throws IOException, InterruptedException {
-            int s = 0;
+            if(currentKey == null) {
+                currentKey = new Text();
+            } else if(!key.getU().equals(currentKey)) {
+                processMap(context);
+            }
+            String curr = key.getV().toString();
+            int sum = 0;
             for (IntWritable value : values) {
-                s += value.get();
+                sum += value.get();
             }
-            if (key.getV().toString().equals("*")) {
-                sum = s;
-            } else {
-                avg.set(s / (double) sum);
-                context.write(key, avg);
+            mapWritable.put(curr, sum);
+            currentKey.set(key.getU());
+        }
+
+        @Override
+        protected void cleanup(Context context) throws IOException, InterruptedException {
+            processMap(context);
+            super.cleanup(context);
+        }
+
+        private void processMap(Context context) throws IOException, InterruptedException {
+            int s = sumMap(mapWritable);
+            utils.MapWritable results = divideMap(mapWritable, s);
+            context.write(currentKey, results);
+            mapWritable.clear();
+        }
+
+        private void addMapValue(Map<String, Integer> m, String key, int v) {
+            int value = m.get(key) + v;
+            m.put(key, value);
+        }
+
+        private int sumMap(Map<String, Integer> map) {
+            int sum = 0;
+            int curr;
+            for (String k : map.keySet()) {
+                curr = map.get(k);
+                sum += curr;
             }
+            return sum;
+        }
+
+        private utils.MapWritable divideMap(Map<String, Integer> map, int value) {
+            int curr;
+            utils.MapWritable res = new utils.MapWritable();
+            for (String k : map.keySet()) {
+                curr = map.get(k);
+                res.put(new Text(k), new DoubleWritable(curr / (double) value));
+            }
+            return res;
         }
     }
 

@@ -18,8 +18,9 @@ import java.util.StringTokenizer;
 public class InMapperWordCount extends Configured implements Tool {
     private final String jobName;
 
-    public InMapperWordCount(String jobName) {
-        this.jobName = jobName;
+    public InMapperWordCount() {
+        String className = this.getClass().getSimpleName();
+        this.jobName = className.toLowerCase();
     }
 
     @Override

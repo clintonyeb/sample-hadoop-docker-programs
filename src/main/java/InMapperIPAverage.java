@@ -18,8 +18,9 @@ import java.util.Map;
 public class InMapperIPAverage extends Configured implements Tool {
     private final String jobName;
 
-    public InMapperIPAverage(String jobName) {
-        this.jobName = jobName;
+    public InMapperIPAverage() {
+        String className = this.getClass().getSimpleName();
+        this.jobName = className.toLowerCase();
     }
 
     @Override

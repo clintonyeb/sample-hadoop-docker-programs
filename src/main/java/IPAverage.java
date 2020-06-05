@@ -15,8 +15,9 @@ import java.io.IOException;
 public class IPAverage extends Configured implements Tool {
     private final String jobName;
 
-    public IPAverage(String jobName) {
-        this.jobName = jobName;
+    public IPAverage() {
+        String className = this.getClass().getSimpleName();
+        this.jobName = className.toLowerCase();
     }
 
     @Override

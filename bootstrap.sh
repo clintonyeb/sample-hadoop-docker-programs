@@ -18,7 +18,7 @@ $HADOOP_PREFIX/sbin/start-all.sh
 # $HADOOP_PREFIX/sbin/start-yarn.sh
 # $HADOOP_PREFIX/sbin/mr-jobhistory-daemon.sh start historyserver
 
-java -jar /bin/hadoop-1.0-jar-with-dependencies.jar /home/input /home/output
+java -jar /bin/hadoop-1.0-jar-with-dependencies.jar /input /output
 
 if [[ $1 == "-d" ]]; then
   while true; do sleep 1000; done

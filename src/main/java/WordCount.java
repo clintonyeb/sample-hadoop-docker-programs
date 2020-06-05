@@ -15,8 +15,9 @@ import java.util.StringTokenizer;
 public class WordCount extends Configured implements Tool {
     private final String jobName;
 
-    public WordCount(String jobName) {
-        this.jobName = jobName;
+    public WordCount() {
+        String className = this.getClass().getSimpleName();
+        this.jobName = className.toLowerCase();
     }
 
     @Override
