@@ -67,7 +67,7 @@ Additional resources for assignment
 File attachment apache-samples.rar ( 20 KB; May 12, 2020 3:58 pm )
 
 
-Quetions:
+Questions:
 
-1. User configuration
-2. PairWritable class
+1. Part 4 explanation
+2. Showing results..how?

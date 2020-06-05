@@ -87,6 +87,7 @@ ADD config/hdfs-site.xml $HADOOP_HOME/etc/hadoop/hdfs-site.xml
 
 ADD config/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
 ADD config/yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml
+ADD config/log4j.properties $HADOOP_HOME/etc/hadoop/log4j.properties
 
 RUN $HADOOP_HOME/bin/hdfs namenode -format
 
