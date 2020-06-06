@@ -97,7 +97,7 @@ ADD src $HOME/src
 RUN mvn package
 
 FROM HADOOP
-COPY --from=BUILD_ENV /tmp/target/hadoop-1.0-jar-with-dependencies.jar /bin/
+COPY --from=BUILD_ENV /tmp/target/hadoop-1.0-jar-with-dependencies.jar $HADOOP_HOME/hadoop.jar
 
 # Clean up
 RUN mkdir -p /input

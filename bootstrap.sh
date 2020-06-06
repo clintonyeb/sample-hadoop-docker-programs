@@ -4,7 +4,8 @@ $HADOOP_PREFIX/etc/hadoop/hadoop-env.sh
 rm /tmp/*.pid
 service ssh start
 $HADOOP_PREFIX/sbin/start-all.sh
-java -jar /bin/hadoop-1.0-jar-with-dependencies.jar /input /output
+
+java -jar $HADOOP_PREFIX/hadoop.jar /input /output
 
 if [[ $1 == "-d" ]]; then
   while true; do sleep 1000; done
