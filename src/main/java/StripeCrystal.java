@@ -14,8 +14,10 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
+import static utils.Util.getInputFilePath;
+import static utils.Util.getOutputFilePath;
+
 public class StripeCrystal extends Configured implements Tool {
-//    private static final Logger logger = Logger.getLogger(StripeCrystal.class);
     private final String jobName;
 
     public StripeCrystal() {
@@ -37,10 +39,8 @@ public class StripeCrystal extends Configured implements Tool {
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
 
-        String inputPath = strings[0] + "/" + jobName;
-        String outputPath = strings[1] + "/" + jobName;
-        FileInputFormat.setInputPaths(job, new Path(inputPath));
-        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+        FileInputFormat.setInputPaths(job, new Path(getInputFilePath(jobName)));
+        FileOutputFormat.setOutputPath(job, new Path(getOutputFilePath(jobName)));
 
         return job.waitForCompletion(false) ? 0 : 1;
     }

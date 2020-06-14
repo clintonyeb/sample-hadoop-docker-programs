@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static utils.Util.getInputFilePath;
+import static utils.Util.getOutputFilePath;
+
 public class InMapperIPAverage extends Configured implements Tool {
     private final String jobName;
 
@@ -37,10 +40,8 @@ public class InMapperIPAverage extends Configured implements Tool {
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(Reduce.class);
 
-        String inputPath = strings[0] + "/" + jobName;
-        String outputPath = strings[1] + "/" + jobName;
-        FileInputFormat.setInputPaths(job, new Path(inputPath));
-        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+        FileInputFormat.setInputPaths(job, new Path(getInputFilePath(jobName)));
+        FileOutputFormat.setOutputPath(job, new Path(getOutputFilePath(jobName)));
 
         return job.waitForCompletion(true) ? 0 : 1;
     }

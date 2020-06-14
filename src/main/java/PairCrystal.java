@@ -14,6 +14,9 @@ import utils.CrystalWriter;
 
 import java.io.IOException;
 
+import static utils.Util.getInputFilePath;
+import static utils.Util.getOutputFilePath;
+
 public class PairCrystal extends Configured implements Tool {
     private final String jobName;
 
@@ -37,10 +40,8 @@ public class PairCrystal extends Configured implements Tool {
         job.setReducerClass(MyReducer.class);
         job.setPartitionerClass(MyPartitioner.class);
 
-        String inputPath = strings[0] + "/" + jobName;
-        String outputPath = strings[1] + "/" + jobName;
-        FileInputFormat.setInputPaths(job, new Path(inputPath));
-        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+        FileInputFormat.setInputPaths(job, new Path(getInputFilePath(jobName)));
+        FileOutputFormat.setOutputPath(job, new Path(getOutputFilePath(jobName)));
 
         return job.waitForCompletion(false) ? 0 : 1;
     }

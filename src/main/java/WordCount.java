@@ -12,6 +12,8 @@ import org.apache.hadoop.util.Tool;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
+import static utils.Util.*;
+
 public class WordCount extends Configured implements Tool {
     private final String jobName;
 
@@ -32,10 +34,8 @@ public class WordCount extends Configured implements Tool {
         job.setMapperClass(Map.class);
         job.setReducerClass(Reduce.class);
 
-        String inputPath = strings[0] + "/" + jobName;
-        String outputPath = strings[1] + "/" + jobName;
-        FileInputFormat.setInputPaths(job, new Path(inputPath));
-        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+        FileInputFormat.setInputPaths(job, new Path(getInputFilePath(jobName)));
+        FileOutputFormat.setOutputPath(job, new Path(getOutputFilePath(jobName)));
 
         return job.waitForCompletion(false) ? 0 : 1;
     }

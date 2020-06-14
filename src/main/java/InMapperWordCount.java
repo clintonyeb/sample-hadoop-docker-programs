@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import static utils.Util.getInputFilePath;
+import static utils.Util.getOutputFilePath;
+
 public class InMapperWordCount extends Configured implements Tool {
     private final String jobName;
 
@@ -35,17 +38,15 @@ public class InMapperWordCount extends Configured implements Tool {
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
 
-        String inputPath = strings[0] + "/" + jobName;
-        String outputPath = strings[1] + "/" + jobName;
-        FileInputFormat.setInputPaths(job, new Path(inputPath));
-        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+        FileInputFormat.setInputPaths(job, new Path(getInputFilePath(jobName)));
+        FileOutputFormat.setOutputPath(job, new Path(getOutputFilePath(jobName)));
 
         return job.waitForCompletion(false) ? 0 : 1;
     }
 
     public static class MyMapper extends
             Mapper<Object, Text, Text, IntWritable> {
-        private static final IntWritable ONE = new IntWritable(1);
+        private static final IntWritable COUNT = new IntWritable(1);
         private final Logger logger = Logger.getLogger(MyMapper.class);
         private final Text word = new Text();
         private Map<String, Integer> cache;
@@ -73,10 +74,9 @@ public class InMapperWordCount extends Configured implements Tool {
         @Override
         protected void cleanup(Context context) throws IOException, InterruptedException {
             for (String s : cache.keySet()) {
-//                logger.debug(String.format("Key: %s, Value: %s", s, cache.get(s)));
                 word.set(s);
-                ONE.set(cache.get(s));
-                context.write(word, ONE);
+                COUNT.set(cache.get(s));
+                context.write(word, COUNT);
             }
             super.cleanup(context);
         }

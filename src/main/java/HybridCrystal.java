@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static utils.Util.getInputFilePath;
+import static utils.Util.getOutputFilePath;
+
 public class HybridCrystal extends Configured implements Tool {
 //    private static final Logger logger = Logger.getLogger(HybridCrystal.class);
     private final String jobName;
@@ -42,10 +45,8 @@ public class HybridCrystal extends Configured implements Tool {
         job.setReducerClass(MyReducer.class);
         job.setPartitionerClass(MyPartitioner.class);
 
-        String inputPath = strings[0] + "/" + jobName;
-        String outputPath = strings[1] + "/" + jobName;
-        FileInputFormat.setInputPaths(job, new Path(inputPath));
-        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+        FileInputFormat.setInputPaths(job, new Path(getInputFilePath(jobName)));
+        FileOutputFormat.setOutputPath(job, new Path(getOutputFilePath(jobName)));
 
         return job.waitForCompletion(false) ? 0 : 1;
     }
